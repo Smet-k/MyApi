@@ -1,1 +1,1 @@
-# my-api
+# MyApi
