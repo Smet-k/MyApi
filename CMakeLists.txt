@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 3.14.0)
-project(CustomApi LANGUAGES C)
+project(MyApi LANGUAGES C)
 
 add_compile_options(-Werror -Wall) 
 
 set(CMAKE_C_STANDARD 11)
 
-file(GLOB_RECURSE CustomApi
+file(GLOB_RECURSE MyApi
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c"
 )
 
-add_executable(CustomApi ${CustomApi})
+add_executable(MyApi ${MyApi})
 
-target_include_directories(CustomApi PUBLIC
+target_include_directories(MyApi PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/services
     ${CMAKE_CURRENT_SOURCE_DIR}/include/controllers
@@ -19,4 +19,4 @@ target_include_directories(CustomApi PUBLIC
 )
 
 find_package(SQLite3 REQUIRED)
-target_link_libraries(CustomApi PRIVATE SQLite::SQLite3)
+target_link_libraries(MyApi PRIVATE SQLite::SQLite3)
