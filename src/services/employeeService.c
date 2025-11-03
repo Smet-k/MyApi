@@ -5,7 +5,7 @@
 
 static int get_employee_count(sqlite3 *db, int *count);
 
-int select_employees_paginated(sqlite3* db, int page, int page_size, Employee* out, int* count) {
+int service_select_employees_paginated(sqlite3* db, int page, int page_size, Employee* out, int* count) {
     const char* sql = "SELECT id, name, surname, position_id FROM Employees LIMIT ? OFFSET ?;";
     sqlite3_stmt* stmt;
     int offset = (page - 1) * page_size;
@@ -36,7 +36,7 @@ int select_employees_paginated(sqlite3* db, int page, int page_size, Employee* o
     return 0;
 }
 
-int select_employee_by_id(sqlite3* db, int id, Employee* out) {
+int service_select_employee_by_id(sqlite3* db, int id, Employee* out) {
     const char* sql = "SELECT id, name, surname, position_id FROM Employees WHERE id = ?;";
     sqlite3_stmt* stmt;
 
@@ -67,7 +67,7 @@ int select_employee_by_id(sqlite3* db, int id, Employee* out) {
     return 0;
 }
 
-int add_employee_by_id(sqlite3* db, const Employee* e) {
+int service_add_employee(sqlite3* db, const Employee* e) {
     const char* sql = "INSERT INTO Employees (name, surname, position_id) VALUES (?, ?, ?);";
     sqlite3_stmt* stmt;
 
@@ -90,7 +90,7 @@ int add_employee_by_id(sqlite3* db, const Employee* e) {
     return 0;
 }
 
-int update_employee_by_object(sqlite3* db, const Employee* e) {
+int service_update_employee(sqlite3* db, const Employee* e) {
     const char* sql = "UPDATE Employees SET name = ?, surname = ?, position_id = ? WHERE id = ?;";
     sqlite3_stmt* stmt;
 
@@ -110,12 +110,20 @@ int update_employee_by_object(sqlite3* db, const Employee* e) {
         return -1;
     }
 
+    int changes = sqlite3_changes(db);
+    sqlite3_finalize(stmt);
+
+    if (changes == 0) {
+        fprintf(stderr, "No employee with ID %d found.\n", e->id);
+        return -1;
+    }
+
     sqlite3_finalize(stmt);
     return 0;
 }
 
-int delete_employee_by_id(sqlite3* db, int id) {
-    const char* sql = "SELECT id, name, surname, position_id FROM Employees WHERE id = ?;";
+int service_delete_employee_by_id(sqlite3* db, int id) {
+    const char* sql = "DELETE FROM Employees WHERE id = ?;";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
@@ -155,23 +163,3 @@ static int get_employee_count(sqlite3 *db, int *count) {
     sqlite3_finalize(stmt);
     return 0;
 }
-
-// int main() {
-//     sqlite3 *db;
-//     if (sqlite3_open("company.db", &db)) {
-//         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-//         return 1;
-//     }
-
-//     Employee emp;
-//     if (get_employee_by_id(db, 2, &emp) == 0) {
-//         printf("Employee found:\n");
-//         printf("ID: %d | %s %s | Position ID: %d\n",
-//                emp.id, emp.name, emp.surname, emp.position_id);
-//     } else {
-//         printf("Employee not found.\n");
-//     }
-
-//     sqlite3_close(db);
-//     return 0;
-// }

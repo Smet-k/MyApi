@@ -31,6 +31,7 @@ static void respond(int client, int code, const char* reason, const char* body);
 // static void respond_file(int client, http_request_t request, FILE* resource);
 
 static void handle_request(int client, http_request_t request, Config* cfg);
+static void handle_request_body(int client, http_request_t request, Config* cfg);
 
 void run_server(Config cfg) {
     struct sockaddr_in server_addr;
@@ -117,7 +118,7 @@ static void accept_requests(int server_fd, Config cfg) {
                 } else {
                     // int client_sock = fds[i].fd;
 
-                    request_context_t* ctx = malloc(sizeof(request_context_t));
+                    request_context_t* ctx = calloc(1, sizeof(request_context_t));
                     ctx->client_sock = fds[i].fd;
                     ctx->cfg = &cfg;
 
@@ -140,7 +141,7 @@ static void process_requests(void* arg) {
     request_context_t* ctx = (request_context_t*)arg;
     int client = ctx->client_sock;
     Config* cfg = ctx->cfg;
-
+    
     // free(ctx);
 
     char buf[BUFFER_SIZE];
@@ -151,7 +152,7 @@ static void process_requests(void* arg) {
         close(client);
         return;
     }
-
+    
     buf[numbytes] = '\0';
     request = parse_request(buf);
 
@@ -163,8 +164,12 @@ static void process_requests(void* arg) {
     switch (request.request_line.method)
     {
     case HTTP_GET:
-    case HTTP_POST:
+    case HTTP_DELETE:
+    case HTTP_PUT:
         handle_request(client, request, cfg);
+        break;
+    case HTTP_POST:
+        handle_request_body(client, request, cfg);
         break;
     default:
         respond(client, 501, "Method Not Implemented", "");
@@ -239,7 +244,7 @@ static void respond(int client, int code, const char* reason, const char* body) 
 
 
 static void handle_request(int client, http_request_t request, Config* cfg) {
-    api_request_t* request_params = malloc(sizeof(api_request_t));
+    api_request_t* request_params = calloc(1, sizeof(api_request_t));
     char param[64] = {0};
 
     const char *path = request.request_line.path;
@@ -250,6 +255,8 @@ static void handle_request(int client, http_request_t request, Config* cfg) {
         query++;
         request_params->query = query;
     } else {request_params->query = NULL;}
+    request_params->body = request.body;
+
     route_t* route = lookup_route(cfg->router, request.request_line.path, request.request_line.method, param);
     request_params->params = param[0] ? param: NULL;
 
@@ -264,3 +271,31 @@ static void handle_request(int client, http_request_t request, Config* cfg) {
     free(request_params);
 }
 
+static void handle_request_body(int client, http_request_t request, Config* cfg){
+    api_request_t* request_params = calloc(1, sizeof(api_request_t));
+    char param[64] = {0};
+
+    const char *path = request.request_line.path;
+    char *query = strchr(path, '?');
+
+    if (query) {
+        *query='\0';
+        query++;
+        request_params->query = query;
+    } else {request_params->query = NULL;}
+    // printf("Request body: %s\n", request.body);
+    request_params->body = request.body;
+
+    route_t* route = lookup_route(cfg->router, request.request_line.path, request.request_line.method, param);
+    request_params->params = param[0] ? param: NULL;
+
+    if (route){
+        api_response_t* response = route->func(request_params);
+        respond(client, response->code, "OK", response->body);
+    }
+    else {
+        respond(client, 404, "Not Found", "");
+    }
+
+    free(request_params);
+}

@@ -9,9 +9,9 @@ typedef struct {
     int position_id;
 } Employee;
 
-int select_employees_paginated(sqlite3* db, int page, int page_size, Employee *out, int *count);
-int select_employee_by_id(sqlite3* db, int id, Employee* out);
-int add_employee_by_id(sqlite3* db, const Employee* e);
-int update_employee_by_object(sqlite3* db, const Employee* e);
-int delete_employee_by_id(sqlite3* db, int id);
+int service_select_employees_paginated(sqlite3* db, int page, int page_size, Employee *out, int *count);
+int service_select_employee_by_id(sqlite3* db, int id, Employee* out);
+int service_add_employee(sqlite3* db, const Employee* e);
+int service_update_employee(sqlite3* db, const Employee* e);
+int service_delete_employee_by_id(sqlite3* db, int id);
 #endif

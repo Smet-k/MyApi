@@ -7,6 +7,9 @@
 void setup_routes(Config *cfg){
     cfg->router = init_router();
 
-    config_router_append(cfg, "api/employee/:id", HTTP_GET, select_employee);
     config_router_append(cfg, "api/employees", HTTP_GET, select_employees);
+    config_router_append(cfg, "api/employee/:id", HTTP_GET, select_employee);
+    config_router_append(cfg, "api/employee/:id", HTTP_DELETE, delete_employee);
+    config_router_append(cfg, "api/employee", HTTP_POST, add_employee);
+    config_router_append(cfg, "api/employee", HTTP_PUT, update_employee);
 };

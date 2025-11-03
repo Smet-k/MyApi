@@ -8,6 +8,7 @@ typedef struct {
 typedef struct {
     char* params;
     char* query;
+    char* body;
 } api_request_t;
 
 #endif
