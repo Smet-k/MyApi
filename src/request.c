@@ -8,6 +8,8 @@
 static const char* http_method_str[] = {
     "GET",
     "POST",
+    "DELETE",
+    "PUT",
     "UNKNOWN"
 };
 
@@ -24,21 +26,20 @@ http_request_t parse_request(char buf[]){
 
     if(parse_headers(buf, &request) < 0)
         perror("failed to parse request headers");
-
+    
     if(parse_body(buf, &request) < 0)
         perror("failed to parse request body");
-        
+    
     return request;
 }
 
 static int parse_headers(char buf[], http_request_t* request){
     char* headers_end = strstr(buf, "\r\n\r\n");
     *headers_end = '\0'; // making strtok not destroy head-body delimiter
-
+    
     char* save_ptr;
     char* line = strtok_r(buf,"\r\n", &save_ptr);
     if(!line) return -1;
-
     int i = 0;
     while(line) {
         if (*line == '\0') {
@@ -68,32 +69,38 @@ static int parse_headers(char buf[], http_request_t* request){
     }
     *headers_end = '\r';
     strcpy(buf, save_ptr);
+
     return 0;
 }
 
 static int parse_request_line(char buf[], http_request_line_t* rl){
-    char method[METHOD_SIZE];
-    char url[URL_SIZE];
-    char format_string[32];
-    char* save_ptr;
-    snprintf(format_string, sizeof(format_string),
-    "%%%ds %%%ds %%%ds", METHOD_SIZE - 1, URL_SIZE - 1, VERSION_SIZE - 1);
-    
-    char* line = strtok_r(buf, "\r\n", &save_ptr);
-    
-    if (!line) {
+    if(!buf){
         rl->method = HTTP_UNKNOWN;
         return -1;
     }
 
-    int n = sscanf(line, format_string, method, url, rl->version);
+    char method[METHOD_SIZE];
+    char url[URL_SIZE];
+    char format_string[32];
+
+    char* request_line_end = strstr(buf, "\r\n");
+    *request_line_end = '\0';
+
+
+    snprintf(format_string, sizeof(format_string),
+    "%%%ds %%%ds %%%ds", METHOD_SIZE - 1, URL_SIZE - 1, VERSION_SIZE - 1);
+    
+    int n = sscanf(buf, format_string, method, url, rl->version);
     if (n != 3) {
         rl->method = HTTP_UNKNOWN;
         return -1;
     }
-    strcpy(buf, save_ptr+1); // +1 removes the \n
 
-    // parse_path(url, rl->path);
+    int rl_length = strlen(buf);
+    *request_line_end = '\r';
+
+    memmove(buf, buf + rl_length + 2,  rl_length + 3);
+
     snprintf(rl->path, PATH_SIZE, "%s", url);
 
     if(parse_method(method, &rl->method) < 0)
@@ -118,23 +125,8 @@ static int parse_method(char* method, http_method_t* methodptr){
     return 0;
 }
 
-// static void parse_path(char* url, char* path){
-
-    // skipping query
-
-    // char* query = strstr(url, "?");
-    // if (query)
-    //     *query = '\0';
-    
-    
-    // if (path[strlen(path) - 1] == '/')
-    //     strncat(path, "index.html", PATH_SIZE - strlen(path) - 1);
-
-// }
-
 static int parse_body(char buf[], http_request_t* request){
     if (!buf || !request) return -1;
-    
     if (request->content_length > 0){
         char* body = strstr(buf, "\r\n\r\n");
         if (body) {
