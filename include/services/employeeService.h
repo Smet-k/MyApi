@@ -2,11 +2,18 @@
 #define EMPLOYEE_SERVICE_H
 #include "config/db.h"
 
+typedef enum {
+    ROLE_EMPLOYEE = 1,
+    ROLE_ADMIN,
+    ROLE_SYSADMIN
+} RoleType;
+
 typedef struct {
     int id;
     char name[50];
     char surname[50];
     int position_id;
+    RoleType role;
 } Employee;
 
 int service_select_employees_paginated(sqlite3* db, int page, int page_size, Employee *out, int *count);

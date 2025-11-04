@@ -12,9 +12,7 @@
 #define PAGE_SIZE 10
 #define EMPLOYEE_SIZE 256
 
-static void parse_paginated_query(char* query, int* page, int* page_size);
 static Employee* parse_employee_json(char* json);
-static char* json_trim(char* str);
 
 api_response_t* select_employee(void* args) {
     api_request_t* request_params = (api_request_t*)args;
@@ -115,7 +113,7 @@ api_response_t* add_employee(void* args) {
     if (service_add_employee(db, employee) < 0){
         fprintf(stderr, "Failed to add employee\n");
         return &(api_response_t){.body="Internal Server Error", .code=500};
-    };
+    }
 
     api_response_t* response = &(api_response_t){.body = "Employee created", .code = 201};
     return response;
@@ -163,29 +161,11 @@ api_response_t* update_employee(void* args){
     if(service_update_employee(db, employee) < 0){
         fprintf(stderr, "Employee with provided ID doesn't exist\n");
         return &(api_response_t){.body="Bad Request", .code=400};
-    };
+    }
+
 
     api_response_t* response = &(api_response_t){.body = "Employee updated", .code = 200};
     return response;
-}
-
-static void parse_paginated_query(char* query, int* page, int* page_size) {
-    char *saveptr1, *saveptr2;
-    char* pair = strtok_r(query, "&", &saveptr1);
-    while (pair != NULL) {
-        char* key = strtok_r(pair, "=", &saveptr2);
-        char* value = strtok_r(NULL, "=", &saveptr2);
-
-        if (key && value) {
-            if (strcasecmp(key, "page") == 0) {
-                *page = atoi(value);
-            } else if (strcasecmp(key, "page_size") == 0) {
-                *page_size = atoi(value);
-            }
-        }
-
-        pair = strtok_r(NULL, "&", &saveptr1);
-    }
 }
 
 static Employee* parse_employee_json(char* json) {
@@ -209,20 +189,9 @@ static Employee* parse_employee_json(char* json) {
         else if(strcmp("name", subtoken) == 0) strcpy(e->name, value);
         else if(strcmp("surname", subtoken) == 0) strcpy(e->surname, value);
         else if(strcmp("position_id", subtoken) == 0) e->position_id = atoi(value);
+        else if(strcmp("role_id", subtoken) == 0) e->role = atoi(value);
     }
 
     return e;
 }
 
-static char* json_trim(char* str) {
-    char* end;
-    while (*str == ' ' || *str == '\t' || *str == '\"') str++;
-
-    end = str + strlen(str) - 1;
-    while (end > str && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r' || *end == '\"')) {
-        *end = '\0';
-        end--;
-    }
-
-    return str;
-}

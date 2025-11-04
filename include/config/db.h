@@ -6,5 +6,5 @@
 
 int open_database(sqlite3** db); 
 int load_database();
-
+int get_entity_count(sqlite3 *db, int *count, char* table);
 #endif

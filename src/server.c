@@ -165,10 +165,10 @@ static void process_requests(void* arg) {
     {
     case HTTP_GET:
     case HTTP_DELETE:
-    case HTTP_PUT:
         handle_request(client, request, cfg);
         break;
     case HTTP_POST:
+    case HTTP_PUT:
         handle_request_body(client, request, cfg);
         break;
     default:
@@ -288,7 +288,6 @@ static void handle_request_body(int client, http_request_t request, Config* cfg)
 
     route_t* route = lookup_route(cfg->router, request.request_line.path, request.request_line.method, param);
     request_params->params = param[0] ? param: NULL;
-
     if (route){
         api_response_t* response = route->func(request_params);
         respond(client, response->code, "OK", response->body);
