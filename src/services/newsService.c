@@ -75,9 +75,9 @@ int service_add_news(sqlite3* db, const Newsletter* n){
         return -1;
     }
 
-    sqlite3_bind_text(stmt, 1, n->title, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 2, n->body, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 3, n->date, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, n->title, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, n->body, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, n->date, -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         fprintf(stderr, "Insert failed: %s\n", sqlite3_errmsg(db));

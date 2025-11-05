@@ -63,18 +63,19 @@ int load_database() {
     }
 
     if (!table_exists(db, "Employees")) {
-        rc = sqlite3_exec(db,
-                          "CREATE TABLE Employees ("
-                          "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                          "name TEXT NOT NULL,"
-                          "surname TEXT NOT NULL,"
-                          "position_id INTEGER,"
-                          "role_id INTEGER,"
-                          "FOREIGN KEY (position_id) REFERENCES Positions(id)"
-                          " ON DELETE SET NULL ON UPDATE CASCADE,"
-                          "FOREIGN KEY (role_id) REFERENCES Roles(id)"
-                          ");",
-                          0, 0, &errMsg);
+rc = sqlite3_exec(db,
+    "CREATE TABLE Employees ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "name TEXT NOT NULL,"
+    "surname TEXT NOT NULL,"
+    "position_id INTEGER,"
+    "role_id INTEGER,"
+    "password TEXT NOT NULL,"
+    "FOREIGN KEY (position_id) REFERENCES Positions(id)"
+    " ON DELETE SET NULL ON UPDATE CASCADE,"
+    "FOREIGN KEY (role_id) REFERENCES Roles(id)"
+    ");",
+    0, 0, &errMsg);
 
         if (rc == SQLITE_OK)
             printf("Table 'Employees' created successfully\n");
@@ -82,9 +83,9 @@ int load_database() {
             fprintf(stderr, "Failed to create Employees: %s\n", errMsg);
 
         const char* sql_insert_employees =
-            "INSERT INTO Employees (name, surname, position_id, role_id) VALUES ('John', 'Doe', 1, 1);"
-            "INSERT INTO Employees (name, surname, position_id, role_id) VALUES ('Jane', 'Doe', 2, 1);"
-            "INSERT INTO Employees (name, surname, position_id, role_id) VALUES ('Edmund', 'McMillen', 4, 1);";
+            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('John', 'Doe', 1, 1, '1111');"
+            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('Jane', 'Doe', 2, 1, '1234');"
+            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('Edmund', 'McMillen', 4, 1, '1243');";
 
         sqlite3_exec(db, sql_insert_employees, 0, 0, &errMsg);
     }
@@ -115,6 +116,35 @@ int load_database() {
         rc = sqlite3_exec(db, sql_insert_news, 0, 0, &errMsg);
     }
 
+    if (!table_exists(db, "Stats")) {
+        rc = sqlite3_exec(db,
+                          "CREATE TABLE Stats ("
+                          "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                          "date TEXT NOT NULL,"
+                          "time TEXT NOT NULL,"
+                          "clock_amount INTEGER NOT NULL,"
+                          "employee_id INTEGER,"
+                          "FOREIGN KEY (employee_id) REFERENCES Employees(id)"
+                          " ON DELETE SET NULL ON UPDATE CASCADE"
+                          ");",
+                          0, 0, &errMsg);
+
+        if (rc == SQLITE_OK)
+            printf("Table 'Stats' created successfully\n");
+        else {
+            fprintf(stderr, "Failed to create 'Stats': %s\n", errMsg);
+            sqlite3_free(errMsg);
+        }
+
+        const char* sql_insert_news =
+            "INSERT INTO Stats (date, time, clock_amount, employee_id) VALUES "
+            "('2025-11-04', '13:45:00', 2, 1),"
+            "('2025-11-05', '19:30:11', 5, 2),"
+            "('2025-11-05', '18:15:25', 10, 3);";
+
+        rc = sqlite3_exec(db, sql_insert_news, 0, 0, &errMsg);
+    }
+
     sqlite3_close(db);
     return 0;
 }
@@ -127,7 +157,7 @@ static int table_exists(sqlite3* db, const char* table_name) {
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
         sqlite3_bind_text(stmt, 1, table_name, -1, SQLITE_STATIC);
         if (sqlite3_step(stmt) == SQLITE_ROW) {
-            exists = 1; 
+            exists = 1;
         }
     }
     sqlite3_finalize(stmt);

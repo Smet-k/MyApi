@@ -14,6 +14,7 @@ typedef struct {
     char surname[50];
     int position_id;
     RoleType role;
+    char password[80];
 } Employee;
 
 int service_select_employees_paginated(sqlite3* db, int page, int page_size, Employee *out, int *count);

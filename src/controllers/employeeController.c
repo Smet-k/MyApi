@@ -10,7 +10,7 @@
 #include "services/employeeService.h"
 
 #define PAGE_SIZE 10
-#define EMPLOYEE_SIZE 256
+#define EMPLOYEE_SIZE 512
 
 static Employee* parse_employee_json(char* json);
 
@@ -33,8 +33,8 @@ api_response_t* select_employee(void* args) {
 
     char body[EMPLOYEE_SIZE + 64];
     snprintf(body, sizeof(body),
-             "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d}",
-             employee.id, employee.name, employee.surname, employee.position_id);
+             "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
+             employee.id, employee.name, employee.surname, employee.position_id, employee.role, employee.password);
 
     sqlite3_close(db);
 
@@ -86,8 +86,8 @@ api_response_t* select_employees(void* args) {
     for (int i = 0; i < page_size && i < count; i++) {
         char buf[EMPLOYEE_SIZE];
         snprintf(buf, sizeof(buf),
-                 "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d}%s",
-                 employees[i].id, employees[i].name, employees[i].surname, employees[i].position_id,
+                 "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}%s",
+                 employees[i].id, employees[i].name, employees[i].surname, employees[i].position_id, employees[i].role, employees[i].password,
                  (i < page_size - 1 && i < count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
@@ -190,6 +190,7 @@ static Employee* parse_employee_json(char* json) {
         else if(strcmp("surname", subtoken) == 0) strcpy(e->surname, value);
         else if(strcmp("position_id", subtoken) == 0) e->position_id = atoi(value);
         else if(strcmp("role_id", subtoken) == 0) e->role = atoi(value);
+        else if(strcmp("password", subtoken) == 0) strcpy(e->password, value);
     }
 
     return e;
