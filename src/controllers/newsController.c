@@ -1,4 +1,4 @@
-#include "controllers/employeeController.h"
+#include "controllers/newsController.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -7,34 +7,35 @@
 #include <strings.h>
 
 #include "config/db.h"
-#include "services/employeeService.h"
+#include "services/newsService.h"
 
 #define PAGE_SIZE 10
-#define EMPLOYEE_SIZE 256
+#define NEWS_SIZE 1024
 
-static Employee* parse_employee_json(char* json);
+static Newsletter* parse_news_json(char* json);
 
-api_response_t* select_employee(void* args) {
+api_response_t* select_newsletter(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
+
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
-    Employee employee;
+    Newsletter news;
 
     const int id = atoi(request_params->params);
 
-    if (service_select_employee_by_id(db, id, &employee) < 0) {
-        fprintf(stderr, "Failed to select employee from database\n");
+    if(service_select_news_by_id(db, id, &news) < 0){
+        fprintf(stderr, "Failed to select news from database\n");
         sqlite3_close(db);
         return &(api_response_t){.body="Bad Request", .code=400};
     }
 
-    char body[EMPLOYEE_SIZE + 64];
+    char body[NEWS_SIZE + 64];
     snprintf(body, sizeof(body),
-             "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d}",
-             employee.id, employee.name, employee.surname, employee.position_id);
+             "{\"id\": %d, \"title\": \"%s\", \"body\": \"%s\", \"date\": %s}",
+             news.id, news.title, news.body, news.date);
 
     sqlite3_close(db);
 
@@ -42,7 +43,7 @@ api_response_t* select_employee(void* args) {
     return response;
 }
 
-api_response_t* select_employees(void* args) {
+api_response_t* select_news(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
     if (open_database(&db) < 0) {
@@ -56,38 +57,32 @@ api_response_t* select_employees(void* args) {
 
     parse_paginated_query(request_params->query, &page, &page_size);
 
-    Employee* employees = calloc(page_size, sizeof(Employee) * page_size);
+    Newsletter* news = calloc(page_size, sizeof(Newsletter) * page_size);
 
-    if (!employees) {
-        fprintf(stderr, "Memory allocation failed for employees\n");
+    if(service_select_news_paginated(db, page, page_size, news, &count) < 0){
+        fprintf(stderr, "Failed to select news from database\n");
+        free(news);
         sqlite3_close(db);
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    if (service_select_employees_paginated(db, page, page_size, employees, &count) < 0) {
-        fprintf(stderr, "Failed to select employees from database\n");
-        free(employees);
-        sqlite3_close(db);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
-    }
-
-    size_t body_size = page_size * EMPLOYEE_SIZE;
+    size_t body_size = page_size * NEWS_SIZE;
     char* body = malloc(body_size);
-    
+
     if (!body) {
         fprintf(stderr, "Memory allocation failed for response body\n");
         sqlite3_close(db);
-        free(employees);
+        free(news);
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
     snprintf(body, body_size, "[");
 
     for (int i = 0; i < page_size && i < count; i++) {
-        char buf[EMPLOYEE_SIZE];
+        char buf[NEWS_SIZE];
         snprintf(buf, sizeof(buf),
-                 "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d}%s",
-                 employees[i].id, employees[i].name, employees[i].surname, employees[i].position_id,
+                 "{\"id\": %d, \"title\": \"%s\", \"body\": \"%s\", \"date\": %s}%s",
+                 news[i].id, news[i].title, news[i].body, news[i].date,
                  (i < page_size - 1 && i < count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
@@ -99,7 +94,7 @@ api_response_t* select_employees(void* args) {
     return response;
 }
 
-api_response_t* add_employee(void* args) {
+api_response_t* add_news(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
 
@@ -108,68 +103,67 @@ api_response_t* add_employee(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    Employee* employee = parse_employee_json(request_params->body);
+    Newsletter* news = parse_news_json(request_params->body);
 
-    if (service_add_employee(db, employee) < 0){
-        fprintf(stderr, "Failed to add employee\n");
+    if (service_add_news(db, news) < 0){
+        fprintf(stderr, "Failed to add news\n");
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    api_response_t* response = &(api_response_t){.body = "Employee created", .code = 201};
+    api_response_t* response = &(api_response_t){.body = "News created", .code = 201};
     return response;
 }
 
-api_response_t* delete_employee(void* args) {
+api_response_t* delete_news(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
 
-    if (open_database(&db) < 0) {
+    if (open_database(&db) < 0){
         fprintf(stderr, "Failed to open database\n");
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
     const int id = atoi(request_params->params);
 
-    if (service_delete_employee_by_id(db, id) < 0) {
-        fprintf(stderr, "Failed to delete employee from database\n");
+    if (service_delete_news_by_id(db, id) < 0){
+        fprintf(stderr, "Failed to delete news from database\n");
         sqlite3_close(db);
         return &(api_response_t){.body="Bad Request", .code=400};
     }
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "Employee deleted", .code = 204};
+    api_response_t* response = &(api_response_t){.body = "News deleted", .code=204};
     return response;
 }
 
-api_response_t* update_employee(void* args){
+api_response_t* update_news(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
 
-    if (open_database(&db) < 0) {
+    if (open_database(&db) < 0){
         fprintf(stderr, "Failed to open database\n");
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    Employee* employee = parse_employee_json(request_params->body);
+    Newsletter* news = parse_news_json(request_params->body);
 
-    if(employee->id <= 0){
+    if (news->id <= 0) {
         fprintf(stderr, "No id provided\n");
         return &(api_response_t){.body="Bad Request", .code=400};
     }
 
-    if(service_update_employee(db, employee) < 0){
-        fprintf(stderr, "Employee with provided ID doesn't exist\n");
+    if(service_update_news(db, news) < 0) {
+        fprintf(stderr, "News with provided Id doesn't exist\n");
         return &(api_response_t){.body="Bad Request", .code=400};
     }
 
-
-    api_response_t* response = &(api_response_t){.body = "Employee updated", .code = 200};
+    api_response_t* response = &(api_response_t){.body = "News updated.", .code = 200};
     return response;
 }
 
-static Employee* parse_employee_json(char* json) {
-    Employee* e = calloc(1, sizeof(Employee));
+static Newsletter* parse_news_json(char* json) {
+    Newsletter* n = calloc(1, sizeof(Newsletter));
     char *str1, *token, *subtoken;
     char *saveptr1, *saveptr2;
 
@@ -185,13 +179,12 @@ static Employee* parse_employee_json(char* json) {
         subtoken = json_trim(strtok_r(token, ":", &saveptr2));
         char* value =  json_trim(strtok_r(NULL, ":", &saveptr2));
         
-        if (strcmp("id", subtoken) == 0) e->id = atoi(value);
-        else if(strcmp("name", subtoken) == 0) strcpy(e->name, value);
-        else if(strcmp("surname", subtoken) == 0) strcpy(e->surname, value);
-        else if(strcmp("position_id", subtoken) == 0) e->position_id = atoi(value);
-        else if(strcmp("role_id", subtoken) == 0) e->role = atoi(value);
+        if (strcmp("id", subtoken) == 0) n->id = atoi(value);
+        else if(strcmp("title", subtoken) == 0) strcpy(n->title, value);
+        else if(strcmp("body", subtoken) == 0) strcpy(n->body, value);
+        else if(strcmp("date", subtoken) == 0) strcpy(n->date, value);
     }
 
-    return e;
+    return n;
 }
 

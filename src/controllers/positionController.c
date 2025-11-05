@@ -32,7 +32,7 @@ api_response_t* select_position(void* args) {
         return &(api_response_t){.body = "Bad Request", .code = 400};
     }
 
-    char body[256];
+    char body[POSITION_SIZE + 64];
     snprintf(body, sizeof(body),
              "{\"id\": %d, \"title\": \"%s\", \"salary\": \"%d\"}",
              position.id, position.title, position.salary);
