@@ -63,19 +63,19 @@ int load_database() {
     }
 
     if (!table_exists(db, "Employees")) {
-rc = sqlite3_exec(db,
-    "CREATE TABLE Employees ("
-    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-    "name TEXT NOT NULL,"
-    "surname TEXT NOT NULL,"
-    "position_id INTEGER,"
-    "role_id INTEGER,"
-    "password TEXT NOT NULL,"
-    "FOREIGN KEY (position_id) REFERENCES Positions(id)"
-    " ON DELETE SET NULL ON UPDATE CASCADE,"
-    "FOREIGN KEY (role_id) REFERENCES Roles(id)"
-    ");",
-    0, 0, &errMsg);
+        rc = sqlite3_exec(db,
+                          "CREATE TABLE Employees ("
+                          "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                          "name TEXT NOT NULL,"
+                          "surname TEXT NOT NULL,"
+                          "position_id INTEGER,"
+                          "role_id INTEGER,"
+                          "password TEXT NOT NULL,"
+                          "FOREIGN KEY (position_id) REFERENCES Positions(id)"
+                          " ON DELETE SET NULL ON UPDATE CASCADE,"
+                          "FOREIGN KEY (role_id) REFERENCES Roles(id)"
+                          ");",
+                          0, 0, &errMsg);
 
         if (rc == SQLITE_OK)
             printf("Table 'Employees' created successfully\n");
