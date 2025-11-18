@@ -3,21 +3,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int service_select_stats_paginated(sqlite3* db, int page, int page_size, Stat* out, int* count){
+int service_select_stats_paginated(sqlite3* db, paginated_request_t* request, Stat* out){
     const char* sql = "SELECT id, date, time, clock_amount, employee_id FROM Stats LIMIT ? OFFSET ?;";
     sqlite3_stmt* stmt;
-    int offset = (page - 1) * page_size;
+    int offset = (request->page - 1) * request->page_size;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK){
         fprintf(stderr, "Prepare failed: %s\n", sqlite3_errmsg(db));
         return -1;
     }
 
-    sqlite3_bind_int(stmt, 1, page_size);
+    sqlite3_bind_int(stmt, 1, request->page_size);
     sqlite3_bind_int(stmt, 2, offset);
 
     int idx = 0;
-    while(sqlite3_step(stmt) == SQLITE_ROW && idx < page_size){
+    while(sqlite3_step(stmt) == SQLITE_ROW && idx < request->page_size){
         out[idx].id = sqlite3_column_int(stmt, 0);
         snprintf(out[idx].date, sizeof(out[idx].date), "%s", sqlite3_column_text(stmt, 1));
         snprintf(out[idx].time, sizeof(out[idx].time), "%s", sqlite3_column_text(stmt, 2));
@@ -26,11 +26,13 @@ int service_select_stats_paginated(sqlite3* db, int page, int page_size, Stat* o
         idx++;
     }
 
-    if (get_entity_count(db, count, "Stats") < 0){
+    if (get_entity_count(db, &request->total_count, "Stats") < 0){
         fprintf(stderr, "Failed to get stat count\n");
         sqlite3_finalize(stmt);
         return -1;
     }
+
+    request->count = idx;
 
     sqlite3_finalize(stmt);
     return 0;

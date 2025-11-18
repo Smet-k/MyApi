@@ -2,6 +2,30 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+void parse_paginated_with_search(char* query, int* page, int* page_size, char* search){
+    char *saveptr1, *saveptr2;
+    char* pair = strtok_r(query, "&", &saveptr1);
+    while (pair != NULL) {
+        char* key = strtok_r(pair, "=", &saveptr2);
+        char* value = strtok_r(NULL, "=", &saveptr2);
+
+        if (key && value) {
+            if (strcasecmp(key, "page") == 0) {
+                *page = atoi(value);
+            } else if (strcasecmp(key, "page_size") == 0) {
+                *page_size = atoi(value);
+            }
+            else if (strcasecmp(key, "search") == 0) {
+                printf("search found");
+                strncpy(search, value, sizeof(search) - 1);
+                search[sizeof(search) - 1] = '\0';
+            }
+        }
+
+        pair = strtok_r(NULL, "&", &saveptr1);
+    }
+}
 
 void parse_paginated_query(char* query, int* page, int* page_size) {
     char *saveptr1, *saveptr2;

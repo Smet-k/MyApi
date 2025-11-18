@@ -52,11 +52,11 @@ api_response_t* select_stats(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    int count = 0;
     int page = 1;
     int page_size = PAGE_SIZE;
 
     parse_paginated_query(request_param->query, &page, &page_size);
+    paginated_request_t request = {.page=page, page_size=page_size};
 
     Stat* stats = calloc(page_size, sizeof(Stat) * page_size);
 
@@ -66,7 +66,7 @@ api_response_t* select_stats(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    if (service_select_stats_paginated(db, page, page_size, stats, &count) < 0){
+    if (service_select_stats_paginated(db, &request, stats) < 0){
         fprintf(stderr, "Failed to select stats from database\n");
         free(stats);
         sqlite3_close(db);
@@ -83,18 +83,23 @@ api_response_t* select_stats(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    snprintf(body, body_size, "[");
+    snprintf(body, body_size, "{ \"items\": [");
 
-    for (int i = 0; i < page_size && i < count; i++) {
+    for (int i = 0; i < request.count; i++) {
         char buf[STAT_SIZE];
         snprintf(buf, sizeof(buf),
                 "{\"id\": %d, \"date\": \"%s\", \"time\": \"%s\", \"clock_amount\": %d, \"employee_id\": %d }%s",
                 stats[i].id, stats[i].date, stats[i].time, stats[i].clock_amount, stats[i].employee_id,
-                (i < page_size - 1 && i < count - 1) ? "," : "");
+                (i < page_size - 1 && i < request.count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
 
-    strncat(body, "]", body_size - strlen(body) - 1);
+    strncat(body, "], ", body_size - strlen(body) - 1);
+    char count_buf[64];
+    snprintf(count_buf, sizeof(count_buf), "\"total_count\": %d", request.total_count);
+    strncat(body, count_buf, body_size - strlen(body) - 1);
+
+    strncat(body, "}", body_size - strlen(body) - 1);
     sqlite3_close(db);
 
     api_response_t* response = &(api_response_t){.body = body, .code = 200};

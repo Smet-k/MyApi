@@ -38,14 +38,14 @@ def get_field(api, index):
     return keys[index], values[index]
 
 def get_paginated_request(api):
-    response = requests.get(f"{REQUEST}{api}s?page={PAGE}&pagesize={PAGESIZE}")
+    response = requests.get(f"{REQUEST}{api}s?page={PAGE}&page_size={PAGESIZE}")
     return response
 
 def get_by_id_request(api):
     response = get_paginated_request(api)
     data = json.loads(response.text)
 
-    existing_id = data[0]["id"]
+    existing_id = data["items"][0]["id"]
 
     response = requests.get(f"{REQUEST}{api}/{existing_id}")
     return response
@@ -54,7 +54,7 @@ def get_by_id_request(api):
 def delete_request(api):
     response = get_paginated_request(api)
     data = json.loads(response.text)
-    existing_id = data[0]["id"]
+    existing_id = data["items"][0]["id"]
 
    
     response = requests.delete(f"{REQUEST}{api}/{existing_id}")
@@ -67,7 +67,7 @@ def post_request(api):
     if api == "stat":
         response = get_paginated_request("employee")
         data = json.loads(response.text)
-        body["employee_id"] = data[0]["id"]
+        body["employee_id"] = data["items"][0]["id"]
     
     response = requests.post(url=f"{REQUEST}{api}",
                         headers={"Content-Type": "application/json"},
@@ -85,12 +85,12 @@ def put_request(api):
     data = json.loads(response.text)
 
     if isinstance(value, int):
-        data[0][key] = value + 1
+        data["items"][0][key] = value + 1
     else:
-        data[0][key] = f"updated {value}"
+        data["items"][0][key] = f"updated {value}"
     
     response = requests.put(url=f"{REQUEST}{api}",
                                 headers={"Content-Type": "application/json"},
-                                data=json.dumps(data[0]))
+                                data=json.dumps(data["items"][0]))
     
     return response

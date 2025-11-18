@@ -51,15 +51,15 @@ api_response_t* select_news(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    int count = 0;
     int page = 1;
     int page_size = PAGE_SIZE;
 
     parse_paginated_query(request_params->query, &page, &page_size);
+    paginated_request_t request = {.page=page, page_size=page_size};
 
     Newsletter* news = calloc(page_size, sizeof(Newsletter) * page_size);
 
-    if(service_select_news_paginated(db, page, page_size, news, &count) < 0){
+    if(service_select_news_paginated(db, &request, news) < 0){
         fprintf(stderr, "Failed to select news from database\n");
         free(news);
         sqlite3_close(db);
@@ -76,18 +76,23 @@ api_response_t* select_news(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    snprintf(body, body_size, "[");
+    snprintf(body, body_size, "{ \"items\": [");
 
-    for (int i = 0; i < page_size && i < count; i++) {
+    for (int i = 0; i < request.count; i++) {
         char buf[NEWS_SIZE];
         snprintf(buf, sizeof(buf),
                  "{\"id\": %d, \"title\": \"%s\", \"body\": \"%s\", \"date\": \"%s\"}%s",
                  news[i].id, news[i].title, news[i].body, news[i].date,
-                 (i < page_size - 1 && i < count - 1) ? "," : "");
+                 (i < page_size - 1 && i < request.count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
 
-    strncat(body, "]", body_size - strlen(body) - 1);
+    strncat(body, "], ", body_size - strlen(body) - 1);
+    char count_buf[64];
+    snprintf(count_buf, sizeof(count_buf), "\"total_count\": %d", request.total_count);
+    strncat(body, count_buf, body_size - strlen(body) - 1);
+
+    strncat(body, "}", body_size - strlen(body) - 1);
 
     sqlite3_close(db);
 

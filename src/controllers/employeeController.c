@@ -50,11 +50,12 @@ api_response_t* select_employees(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    int count = 0;
+    char search[50];
     int page = 1;
     int page_size = PAGE_SIZE;
 
-    parse_paginated_query(request_params->query, &page, &page_size);
+    parse_paginated_with_search(request_params->query, &page, &page_size, search);
+    paginated_request_t request = {.page=page, page_size=page_size};
 
     Employee* employees = calloc(page_size, sizeof(Employee) * page_size);
 
@@ -64,7 +65,7 @@ api_response_t* select_employees(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    if (service_select_employees_paginated(db, page, page_size, employees, &count) < 0) {
+    if (service_select_employees_paginated(db, &request, search, employees) < 0) {
         fprintf(stderr, "Failed to select employees from database\n");
         free(employees);
         sqlite3_close(db);
@@ -81,18 +82,24 @@ api_response_t* select_employees(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    snprintf(body, body_size, "[");
+    snprintf(body, body_size, "{ \"items\": [");
 
-    for (int i = 0; i < page_size && i < count; i++) {
+    for (int i = 0; i < request.count; i++) {
         char buf[EMPLOYEE_SIZE];
         snprintf(buf, sizeof(buf),
                  "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}%s",
                  employees[i].id, employees[i].name, employees[i].surname, employees[i].position_id, employees[i].role, employees[i].password,
-                 (i < page_size - 1 && i < count - 1) ? "," : "");
+                 (i < page_size - 1 && i < request.count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
 
-    strncat(body, "]", body_size - strlen(body) - 1);
+    strncat(body, "], ", body_size - strlen(body) - 1);
+    char count_buf[64];
+    snprintf(count_buf, sizeof(count_buf), "\"total_count\": %d", request.total_count);
+    strncat(body, count_buf, body_size - strlen(body) - 1);
+
+    strncat(body, "}", body_size - strlen(body) - 1);
+
     sqlite3_close(db);
 
     api_response_t* response = &(api_response_t){.body = body, .code = 200};
