@@ -62,16 +62,22 @@ def delete_request(api):
     return response
 
 def post_request(api):
-   
-    response = requests.post(url=f"{REQUEST}{api}",
-                            headers={"Content-Type": "application/json"},
-                            data=json.dumps(EXAMPLE_BODIES[api]))
+    body = EXAMPLE_BODIES[api]
+
+    if api == "stat":
+        response = get_paginated_request("employee")
+        data = json.loads(response.text)
+        body["employee_id"] = data[0]["id"]
     
+    response = requests.post(url=f"{REQUEST}{api}",
+                        headers={"Content-Type": "application/json"},
+                        data=json.dumps(body))
+
     return response
 
 def put_request(api):
     updated_field = 2 if api == "stat" else 0
-
+    
     key, value = get_field(api, updated_field)
     
     response = requests.get(f"{REQUEST}{api}s")
