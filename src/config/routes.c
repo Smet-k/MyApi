@@ -21,11 +21,11 @@ void setup_routes(Config *cfg){
     config_router_append(cfg, "api/position", HTTP_POST, add_position);
     config_router_append(cfg, "api/position", HTTP_PUT, update_position);
 
-    config_router_append(cfg, "api/news", HTTP_GET, select_news);
-    config_router_append(cfg, "api/news/:id", HTTP_GET, select_newsletter);
-    config_router_append(cfg, "api/news/:id", HTTP_DELETE, delete_news);
-    config_router_append(cfg, "api/news", HTTP_POST, add_news);
-    config_router_append(cfg, "api/news", HTTP_PUT, update_news);
+    config_router_append(cfg, "api/newsletters", HTTP_GET, select_news);
+    config_router_append(cfg, "api/newsletter/:id", HTTP_GET, select_newsletter);
+    config_router_append(cfg, "api/newsletter/:id", HTTP_DELETE, delete_news);
+    config_router_append(cfg, "api/newsletter", HTTP_POST, add_news);
+    config_router_append(cfg, "api/newsletter", HTTP_PUT, update_news);
 
     config_router_append(cfg, "api/stats", HTTP_GET, select_stats);
     config_router_append(cfg, "api/stat/:id", HTTP_GET, select_stat);

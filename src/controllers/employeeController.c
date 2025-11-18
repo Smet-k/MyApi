@@ -138,7 +138,7 @@ api_response_t* delete_employee(void* args) {
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "Employee deleted", .code = 204};
+    api_response_t* response = &(api_response_t){.body = "Employee deleted", .code = 200};
     return response;
 }
 

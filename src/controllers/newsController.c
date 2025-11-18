@@ -81,13 +81,14 @@ api_response_t* select_news(void* args){
     for (int i = 0; i < page_size && i < count; i++) {
         char buf[NEWS_SIZE];
         snprintf(buf, sizeof(buf),
-                 "{\"id\": %d, \"title\": \"%s\", \"body\": \"%s\", \"date\": %s}%s",
+                 "{\"id\": %d, \"title\": \"%s\", \"body\": \"%s\", \"date\": \"%s\"}%s",
                  news[i].id, news[i].title, news[i].body, news[i].date,
                  (i < page_size - 1 && i < count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
 
     strncat(body, "]", body_size - strlen(body) - 1);
+
     sqlite3_close(db);
 
     api_response_t* response = &(api_response_t){.body = body, .code = 200};
@@ -133,7 +134,7 @@ api_response_t* delete_news(void* args){
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "News deleted", .code=204};
+    api_response_t* response = &(api_response_t){.body = "Newsletter deleted", .code=200};
     return response;
 }
 

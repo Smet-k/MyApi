@@ -36,7 +36,7 @@ int service_select_news_paginated(sqlite3* db, int page, int page_size, Newslett
 }
 
 int service_select_news_by_id(sqlite3* db, int id, Newsletter* out){
-    const char* sql = "SELECT id, title, body, date, FROM News WHERE id = ?;";
+    const char* sql = "SELECT id, title, body, date FROM News WHERE id = ?;";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
@@ -90,7 +90,7 @@ int service_add_news(sqlite3* db, const Newsletter* n){
 }
 
 int service_update_news(sqlite3* db, const Newsletter* n){
-    const char* sql = "UPDATE News SET title = ?, body = ?, date = ?, WHERE id = ?;";
+    const char* sql = "UPDATE News SET title = ?, body = ?, date = ? WHERE id = ?;";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
