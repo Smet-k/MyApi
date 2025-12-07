@@ -13,6 +13,7 @@ typedef struct {
     int id;
     char name[50];
     char surname[50];
+    char date[16];
     int position_id;
     RoleType role;
     char password[80];

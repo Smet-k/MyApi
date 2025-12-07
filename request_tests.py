@@ -9,6 +9,7 @@ EXAMPLE_BODIES = {
     "employee": {
         "name": "John",
         "surname": "Doe",
+        "employment_date": "2025-11-04",
         "position_id": 1,
         "role_id": 1,
         "password": "1111"

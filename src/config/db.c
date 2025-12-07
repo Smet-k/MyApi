@@ -68,6 +68,7 @@ int load_database() {
                           "id INTEGER PRIMARY KEY AUTOINCREMENT,"
                           "name TEXT NOT NULL,"
                           "surname TEXT NOT NULL,"
+                          "employment_date TEXT NOT NULL,"
                           "position_id INTEGER,"
                           "role_id INTEGER,"
                           "password TEXT NOT NULL,"
@@ -83,9 +84,9 @@ int load_database() {
             fprintf(stderr, "Failed to create Employees: %s\n", errMsg);
 
         const char* sql_insert_employees =
-            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('John', 'Doe', 1, 1, '1111');"
-            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('Jane', 'Doe', 2, 1, '1234');"
-            "INSERT INTO Employees (name, surname, position_id, role_id, password) VALUES ('Edmund', 'McMillen', 4, 1, '1243');";
+            "INSERT INTO Employees (name, surname, employment_date, position_id, role_id, password) VALUES ('John', 'Doe','2025-11-04', 1, 1, '1111');"
+            "INSERT INTO Employees (name, surname, employment_date, position_id, role_id, password) VALUES ('Jane', 'Doe','2025-10-10', 2, 1, '1234');"
+            "INSERT INTO Employees (name, surname, employment_date, position_id, role_id, password) VALUES ('Edmund', 'McMillen','2025-05-02', 4, 1, '1243');";
 
         sqlite3_exec(db, sql_insert_employees, 0, 0, &errMsg);
     }
