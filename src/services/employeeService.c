@@ -88,7 +88,7 @@ int service_select_employee_by_id(sqlite3* db, int id, Employee* out) {
     return 0;
 }
 
-int service_select_employee_by_name(sqlite3* db, char* login, Employee* out){
+int service_select_employee_by_login(sqlite3* db, char* login, Employee* out){
     const char* sql = "SELECT id, login, name, surname, employment_date, position_id, role_id, password FROM Employees WHERE login = ? COLLATE BINARY;";
     sqlite3_stmt* stmt;
 
