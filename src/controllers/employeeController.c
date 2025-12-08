@@ -199,8 +199,13 @@ api_response_t* auth_employee(void* args){
         return &(api_response_t){.body="Unauthorized", .code=401};
     }
 
+    char body[EMPLOYEE_SIZE + 64];
+    snprintf(body, sizeof(body),
+             "{\"id\": %d, \"login\": \"%s\", \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
+             employee->id, employee->login, employee->name, employee->surname,employee->date, employee->position_id, employee->role, employee->password);
 
-    api_response_t* response = &(api_response_t){.body = "Employee authorized", .code = 200};
+
+    api_response_t* response = &(api_response_t){.body = body, .code = 200};
     return response;
 }
 

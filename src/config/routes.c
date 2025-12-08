@@ -14,6 +14,7 @@ void setup_routes(Config *cfg){
     config_router_append(cfg, "api/employee/:id", HTTP_DELETE, delete_employee);
     config_router_append(cfg, "api/employee", HTTP_POST, add_employee);
     config_router_append(cfg, "api/employee", HTTP_PUT, update_employee);
+    config_router_append(cfg, "api/employee/auth", HTTP_POST, auth_employee);
 
     config_router_append(cfg, "api/positions", HTTP_GET, select_positions);
     config_router_append(cfg, "api/position/:id", HTTP_GET, select_position);
