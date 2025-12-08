@@ -7,6 +7,7 @@ PORT=8080
 REQUEST = f"http://localhost:{PORT}/api/"
 EXAMPLE_BODIES = {
     "employee": {
+        "login": "johndoe",
         "name": "John",
         "surname": "Doe",
         "employment_date": "2025-11-04",

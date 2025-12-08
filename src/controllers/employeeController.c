@@ -11,7 +11,7 @@
 
 #define PAGE_SIZE 10
 #define EMPLOYEE_SIZE 512
-
+static void json_remove_spaces(char *s);
 static Employee* parse_employee_json(char* json);
 
 api_response_t* select_employee(void* args) {
@@ -33,8 +33,8 @@ api_response_t* select_employee(void* args) {
 
     char body[EMPLOYEE_SIZE + 64];
     snprintf(body, sizeof(body),
-             "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
-             employee.id, employee.name, employee.surname,employee.date, employee.position_id, employee.role, employee.password);
+             "{\"id\": %d, \"login\": \"%s\", \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
+             employee.id, employee.login, employee.name, employee.surname,employee.date, employee.position_id, employee.role, employee.password);
 
     sqlite3_close(db);
 
@@ -87,8 +87,8 @@ api_response_t* select_employees(void* args) {
     for (int i = 0; i < request.count; i++) {
         char buf[EMPLOYEE_SIZE];
         snprintf(buf, sizeof(buf),
-                 "{\"id\": %d, \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}%s",
-                 employees[i].id, employees[i].name, employees[i].surname, employees[i].date, employees[i].position_id, employees[i].role, employees[i].password,
+                 "{\"id\": %d, \"login\": \"%s\", \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}%s",
+                 employees[i].id, employees[i].login, employees[i].name, employees[i].surname, employees[i].date, employees[i].position_id, employees[i].role, employees[i].password,
                  (i < page_size - 1 && i < request.count - 1) ? "," : "");
         strncat(body, buf, body_size - strlen(body) - 1);
     }
@@ -115,6 +115,7 @@ api_response_t* add_employee(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
+    json_remove_spaces(request_params->body);
     Employee* employee = parse_employee_json(request_params->body);
 
     if (service_add_employee(db, employee) < 0){
@@ -158,6 +159,7 @@ api_response_t* update_employee(void* args){
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
+    json_remove_spaces(request_params->body);
     Employee* employee = parse_employee_json(request_params->body);
 
     if(employee->id <= 0){
@@ -172,6 +174,33 @@ api_response_t* update_employee(void* args){
 
 
     api_response_t* response = &(api_response_t){.body = "Employee updated", .code = 200};
+    return response;
+}
+
+api_response_t* auth_employee(void* args){
+    api_request_t* request_params = (api_request_t*)args;
+    sqlite3* db = NULL;
+
+    if (open_database(&db) < 0) {
+        fprintf(stderr, "Failed to open database\n");
+        return &(api_response_t){.body="Internal Server Error", .code=500};
+    }
+
+    json_remove_spaces(request_params->body);
+    Employee* employee = parse_employee_json(request_params->body);
+    char* password = employee->password;
+
+    if(service_select_employee_by_name(db, employee->name,employee) < 0){
+        fprintf(stderr, "Employee with provided ID doesn't exist\n");
+        return &(api_response_t){.body="Bad Request", .code=400};
+    }
+
+    if (strcmp(password, employee->password)){
+        return &(api_response_t){.body="Unauthorized", .code=401};
+    }
+
+
+    api_response_t* response = &(api_response_t){.body = "Employee authorized", .code = 200};
     return response;
 }
 
@@ -193,6 +222,7 @@ static Employee* parse_employee_json(char* json) {
         char* value =  json_trim(strtok_r(NULL, ":", &saveptr2));
         
         if (strcmp("id", subtoken) == 0) e->id = atoi(value);
+        else if(strcmp("login", subtoken) == 0) strcpy(e->login, value);
         else if(strcmp("name", subtoken) == 0) strcpy(e->name, value);
         else if(strcmp("surname", subtoken) == 0) strcpy(e->surname, value);
         else if(strcmp("position_id", subtoken) == 0) e->position_id = atoi(value);
@@ -204,3 +234,13 @@ static Employee* parse_employee_json(char* json) {
     return e;
 }
 
+static void json_remove_spaces(char *s) {
+    int in_quotes = 0, j = 0;
+    for (int i = 0; s[i]; i++) {
+        if (s[i] == '"') in_quotes = !in_quotes;
+        if (!in_quotes && (s[i] == ' ' || s[i] == '\n' || s[i] == '\t'))
+            continue;
+        s[j++] = s[i];
+    }
+    s[j] = '\0';
+}

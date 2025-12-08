@@ -11,6 +11,7 @@ typedef enum {
 
 typedef struct {
     int id;
+    char login[50];
     char name[50];
     char surname[50];
     char date[16];
@@ -24,4 +25,5 @@ int service_select_employee_by_id(sqlite3* db, int id, Employee* out);
 int service_add_employee(sqlite3* db, const Employee* e);
 int service_update_employee(sqlite3* db, const Employee* e);
 int service_delete_employee_by_id(sqlite3* db, int id);
+int service_select_employee_by_name(sqlite3* db, char* login, Employee* out);
 #endif
