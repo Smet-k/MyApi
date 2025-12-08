@@ -112,7 +112,7 @@ api_response_t* add_employee(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     json_remove_spaces(request_params->body);
@@ -120,7 +120,7 @@ api_response_t* add_employee(void* args) {
 
     if (service_add_employee(db, employee) < 0){
         fprintf(stderr, "Failed to add employee\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     api_response_t* response = &(api_response_t){.body = "Employee created", .code = 201, .reason="Created"};

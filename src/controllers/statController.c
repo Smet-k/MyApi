@@ -29,7 +29,7 @@ api_response_t* select_stat(void* args){
     if (service_select_stat_by_id(db, id, &stat) < 0) {
         fprintf(stderr, "Failed to select employee from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     char body[STAT_SIZE + 32];
