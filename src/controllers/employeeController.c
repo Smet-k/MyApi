@@ -190,8 +190,8 @@ api_response_t* auth_employee(void* args){
     Employee* employee = parse_employee_json(request_params->body);
     char* password = employee->password;
 
-    if(service_select_employee_by_name(db, employee->name,employee) < 0){
-        fprintf(stderr, "Employee with provided ID doesn't exist\n");
+    if(service_select_employee_by_login(db, employee->login,employee) < 0){
+        fprintf(stderr, "User with provided login doesn't exist\n");
         return &(api_response_t){.body="Bad Request", .code=400};
     }
 
