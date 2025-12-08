@@ -3,6 +3,7 @@
 typedef struct {
     char* body;
     int code;
+    char* reason;
 } api_response_t;
 
 typedef struct {

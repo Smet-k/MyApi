@@ -262,7 +262,7 @@ static void handle_request(int client, http_request_t request, Config* cfg) {
 
     if (route){
         api_response_t* response = route->func(request_params);
-        respond(client, response->code, "OK", response->body);
+        respond(client, response->code, response->reason, response->body);
     }
     else {
         respond(client, 404, "Not Found", "");

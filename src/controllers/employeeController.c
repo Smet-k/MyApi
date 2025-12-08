@@ -19,7 +19,7 @@ api_response_t* select_employee(void* args) {
     sqlite3* db = NULL;
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500,};
     }
     Employee employee;
 
@@ -28,7 +28,7 @@ api_response_t* select_employee(void* args) {
     if (service_select_employee_by_id(db, id, &employee) < 0) {
         fprintf(stderr, "Failed to select employee from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     char body[EMPLOYEE_SIZE + 64];
@@ -38,7 +38,7 @@ api_response_t* select_employee(void* args) {
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -47,7 +47,7 @@ api_response_t* select_employees(void* args) {
     sqlite3* db = NULL;
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     char search[50];
@@ -62,14 +62,14 @@ api_response_t* select_employees(void* args) {
     if (!employees) {
         fprintf(stderr, "Memory allocation failed for employees\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     if (service_select_employees_paginated(db, &request, search, employees) < 0) {
         fprintf(stderr, "Failed to select employees from database\n");
         free(employees);
         sqlite3_close(db);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     size_t body_size = page_size * EMPLOYEE_SIZE;
@@ -79,7 +79,7 @@ api_response_t* select_employees(void* args) {
         fprintf(stderr, "Memory allocation failed for response body\n");
         sqlite3_close(db);
         free(employees);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     snprintf(body, body_size, "{ \"items\": [");
@@ -102,7 +102,7 @@ api_response_t* select_employees(void* args) {
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -123,7 +123,7 @@ api_response_t* add_employee(void* args) {
         return &(api_response_t){.body="Internal Server Error", .code=500};
     }
 
-    api_response_t* response = &(api_response_t){.body = "Employee created", .code = 201};
+    api_response_t* response = &(api_response_t){.body = "Employee created", .code = 201, .reason="Created"};
     return response;
 }
 
@@ -133,7 +133,7 @@ api_response_t* delete_employee(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     const int id = atoi(request_params->params);
@@ -141,12 +141,12 @@ api_response_t* delete_employee(void* args) {
     if (service_delete_employee_by_id(db, id) < 0) {
         fprintf(stderr, "Failed to delete employee from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "Employee deleted", .code = 200};
+    api_response_t* response = &(api_response_t){.code = 204, .reason="No Content"};
     return response;
 }
 
@@ -156,7 +156,7 @@ api_response_t* update_employee(void* args){
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     json_remove_spaces(request_params->body);
@@ -164,16 +164,16 @@ api_response_t* update_employee(void* args){
 
     if(employee->id <= 0){
         fprintf(stderr, "No id provided\n");
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     if(service_update_employee(db, employee) < 0){
         fprintf(stderr, "Employee with provided ID doesn't exist\n");
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
 
-    api_response_t* response = &(api_response_t){.body = "Employee updated", .code = 200};
+    api_response_t* response = &(api_response_t){.body = "Employee updated", .code = 200, .reason="OK"};
     return response;
 }
 
@@ -183,7 +183,7 @@ api_response_t* auth_employee(void* args){
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     json_remove_spaces(request_params->body);
@@ -192,11 +192,11 @@ api_response_t* auth_employee(void* args){
 
     if(service_select_employee_by_login(db, employee->login,employee) < 0){
         fprintf(stderr, "User with provided login doesn't exist\n");
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     if (strcmp(password, employee->password)){
-        return &(api_response_t){.body="Unauthorized", .code=401};
+        return &(api_response_t){.reason="Unauthorized", .code=401};
     }
 
     char body[EMPLOYEE_SIZE + 64];
@@ -205,7 +205,7 @@ api_response_t* auth_employee(void* args){
              employee->id, employee->login, employee->name, employee->surname,employee->date, employee->position_id, employee->role, employee->password);
 
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 

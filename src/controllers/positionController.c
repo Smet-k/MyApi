@@ -20,7 +20,7 @@ api_response_t* select_position(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
     Position position;
 
@@ -29,7 +29,7 @@ api_response_t* select_position(void* args) {
     if (service_select_position_by_id(db, id, &position) < 0) {
         fprintf(stderr, "Failed to select position from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body = "Bad Request", .code = 400};
+        return &(api_response_t){.reason = "Bad Request", .code = 400};
     }
 
     char body[POSITION_SIZE + 64];
@@ -39,7 +39,7 @@ api_response_t* select_position(void* args) {
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -48,7 +48,7 @@ api_response_t* select_positions(void* args) {
     sqlite3* db = NULL;
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     int page = 1;
@@ -62,14 +62,14 @@ api_response_t* select_positions(void* args) {
     if (!positions) {
         fprintf(stderr, "Memory allocation failed for employees\n");
         sqlite3_close(db);
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     if (service_select_positions_paginated(db, &request, positions) < 0) {
         fprintf(stderr, "Failed to select positions from database\n");
         free(positions);
         sqlite3_close(db);
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     size_t body_size = page_size * POSITION_SIZE;
@@ -79,7 +79,7 @@ api_response_t* select_positions(void* args) {
         fprintf(stderr, "Memory allocation failed for response body\n");
         sqlite3_close(db);
         free(positions);
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     snprintf(body, body_size, "{ \"items\": [");
@@ -101,7 +101,7 @@ api_response_t* select_positions(void* args) {
     strncat(body, "}", body_size - strlen(body) - 1);
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -111,17 +111,17 @@ api_response_t* add_position(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     Position* position = parse_position_json(request_params->body);
 
     if (service_add_position(db, position) < 0) {
         fprintf(stderr, "Failed to add position\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
-    api_response_t* response = &(api_response_t){.body = "Position created", .code = 201};
+    api_response_t* response = &(api_response_t){.body = "Position created", .code = 201, .reason = "Created"};
     return response;
 }
 api_response_t* delete_position(void* args) {
@@ -130,7 +130,7 @@ api_response_t* delete_position(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     const int id = atoi(request_params->params);
@@ -138,12 +138,12 @@ api_response_t* delete_position(void* args) {
     if (service_delete_position_by_id(db, id) < 0) {
         fprintf(stderr, "Failed to delete position from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body = "Bad Request", .code = 400};
+        return &(api_response_t){.reason = "Bad Request", .code = 400};
     }
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "Position deleted", .code = 200};
+    api_response_t* response = &(api_response_t){.code = 204, .reason="No Content"};
     return response;
 }
 
@@ -153,22 +153,22 @@ api_response_t* update_position(void* args) {
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body = "Internal Server Error", .code = 500};
+        return &(api_response_t){.reason = "Internal Server Error", .code = 500};
     }
 
     Position* position = parse_position_json(request_params->body);
 
     if (position->id <= 0) {
         fprintf(stderr, "No id provided\n");
-        return &(api_response_t){.body = "Bad Request", .code = 400};
+        return &(api_response_t){.reason = "Bad Request", .code = 400};
     }
 
     if (service_update_position(db, position) < 0) {
         fprintf(stderr, "Position with provided ID doesn't exist\n");
-        return &(api_response_t){.body = "Bad Request", .code = 400};
+        return &(api_response_t){.reason = "Bad Request", .code = 400};
     }
 
-    api_response_t* response = &(api_response_t){.body = "Position updated", .code = 200};
+    api_response_t* response = &(api_response_t){.body = "Position updated", .code = 200, .reason="OK"};
     return response;
 }
 

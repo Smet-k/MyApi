@@ -20,7 +20,7 @@ api_response_t* select_newsletter(void* args){
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
     Newsletter news;
 
@@ -29,7 +29,7 @@ api_response_t* select_newsletter(void* args){
     if(service_select_news_by_id(db, id, &news) < 0){
         fprintf(stderr, "Failed to select news from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     char body[NEWS_SIZE + 64];
@@ -39,7 +39,7 @@ api_response_t* select_newsletter(void* args){
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -48,7 +48,7 @@ api_response_t* select_news(void* args){
     sqlite3* db = NULL;
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     int page = 1;
@@ -63,7 +63,7 @@ api_response_t* select_news(void* args){
         fprintf(stderr, "Failed to select news from database\n");
         free(news);
         sqlite3_close(db);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     size_t body_size = page_size * NEWS_SIZE;
@@ -73,7 +73,7 @@ api_response_t* select_news(void* args){
         fprintf(stderr, "Memory allocation failed for response body\n");
         sqlite3_close(db);
         free(news);
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     snprintf(body, body_size, "{ \"items\": [");
@@ -96,7 +96,7 @@ api_response_t* select_news(void* args){
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = body, .code = 200};
+    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;
 }
 
@@ -106,17 +106,17 @@ api_response_t* add_news(void* args){
 
     if (open_database(&db) < 0) {
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     Newsletter* news = parse_news_json(request_params->body);
 
     if (service_add_news(db, news) < 0){
         fprintf(stderr, "Failed to add news\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
-    api_response_t* response = &(api_response_t){.body = "News created", .code = 201};
+    api_response_t* response = &(api_response_t){.body = "News created", .code = 201, .reason="Created"};
     return response;
 }
 
@@ -126,7 +126,7 @@ api_response_t* delete_news(void* args){
 
     if (open_database(&db) < 0){
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     const int id = atoi(request_params->params);
@@ -134,12 +134,12 @@ api_response_t* delete_news(void* args){
     if (service_delete_news_by_id(db, id) < 0){
         fprintf(stderr, "Failed to delete news from database\n");
         sqlite3_close(db);
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     sqlite3_close(db);
 
-    api_response_t* response = &(api_response_t){.body = "Newsletter deleted", .code=200};
+    api_response_t* response = &(api_response_t){.code=204, .reason="No Content"};
     return response;
 }
 
@@ -149,22 +149,22 @@ api_response_t* update_news(void* args){
 
     if (open_database(&db) < 0){
         fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.body="Internal Server Error", .code=500};
+        return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
     Newsletter* news = parse_news_json(request_params->body);
 
     if (news->id <= 0) {
         fprintf(stderr, "No id provided\n");
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
     if(service_update_news(db, news) < 0) {
         fprintf(stderr, "News with provided Id doesn't exist\n");
-        return &(api_response_t){.body="Bad Request", .code=400};
+        return &(api_response_t){.reason="Bad Request", .code=400};
     }
 
-    api_response_t* response = &(api_response_t){.body = "News updated.", .code = 200};
+    api_response_t* response = &(api_response_t){.body = "News updated.", .code = 200, .reason="OK"};
     return response;
 }
 
