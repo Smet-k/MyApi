@@ -177,38 +177,6 @@ api_response_t* update_employee(void* args){
     return response;
 }
 
-api_response_t* auth_employee(void* args){
-    api_request_t* request_params = (api_request_t*)args;
-    sqlite3* db = NULL;
-
-    if (open_database(&db) < 0) {
-        fprintf(stderr, "Failed to open database\n");
-        return &(api_response_t){.reason="Internal Server Error", .code=500};
-    }
-
-    json_remove_spaces(request_params->body);
-    Employee* employee = parse_employee_json(request_params->body);
-    char* password = employee->password;
-
-    if(service_select_employee_by_login(db, employee->login,employee) < 0){
-        fprintf(stderr, "User with provided login doesn't exist\n");
-        return &(api_response_t){.reason="Bad Request", .code=400};
-    }
-
-    if (strcmp(password, employee->password)){
-        printf("User not authorized\n");
-        return &(api_response_t){.reason="Unauthorized", .code=401};
-    }
-
-    char body[EMPLOYEE_SIZE + 64];
-    snprintf(body, sizeof(body),
-             "{\"id\": %d, \"login\": \"%s\", \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
-             employee->id, employee->login, employee->name, employee->surname,employee->date, employee->position_id, employee->role, employee->password);
-
-    api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
-    return response;
-}
-
 static Employee* parse_employee_json(char* json) {
     Employee* e = calloc(1, sizeof(Employee));
     char *str1, *token, *subtoken;
