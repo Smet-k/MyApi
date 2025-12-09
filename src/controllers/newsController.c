@@ -55,7 +55,7 @@ api_response_t* select_news(void* args){
     int page_size = PAGE_SIZE;
 
     parse_paginated_query(request_params->query, &page, &page_size);
-    paginated_request_t request = {.page=page, page_size=page_size};
+    paginated_request_t request = {.page=page, .page_size=page_size};
 
     Newsletter* news = calloc(page_size, sizeof(Newsletter) * page_size);
 

@@ -7,5 +7,5 @@ api_response_t* select_stats(void* args);
 api_response_t* add_stat(void* args);
 api_response_t* delete_stat(void* args);
 api_response_t* update_stat(void* args);
-
+api_response_t* select_stats_for_employee(void* args);
 #endif

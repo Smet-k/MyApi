@@ -55,7 +55,7 @@ api_response_t* select_employees(void* args) {
     int page_size = PAGE_SIZE;
 
     parse_paginated_with_search(request_params->query, &page, &page_size, search);
-    paginated_request_t request = {.page=page, page_size=page_size};
+    paginated_request_t request = {.page=page, .page_size=page_size};
 
     Employee* employees = calloc(page_size, sizeof(Employee) * page_size);
 
@@ -196,6 +196,7 @@ api_response_t* auth_employee(void* args){
     }
 
     if (strcmp(password, employee->password)){
+        printf("User not authorized\n");
         return &(api_response_t){.reason="Unauthorized", .code=401};
     }
 
@@ -203,7 +204,6 @@ api_response_t* auth_employee(void* args){
     snprintf(body, sizeof(body),
              "{\"id\": %d, \"login\": \"%s\", \"name\": \"%s\", \"surname\": \"%s\", \"employment_date\": \"%s\", \"position_id\": %d, \"role_id\": %d, \"password\": \"%s\"}",
              employee->id, employee->login, employee->name, employee->surname,employee->date, employee->position_id, employee->role, employee->password);
-
 
     api_response_t* response = &(api_response_t){.body = body, .code = 200, .reason="OK"};
     return response;

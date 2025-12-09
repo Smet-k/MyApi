@@ -124,7 +124,7 @@ int service_select_employee_by_login(sqlite3* db, char* login, Employee* out){
 }
 
 int service_add_employee(sqlite3* db, const Employee* e) {
-    const char* sql = "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES (?, ?, ?, ?, ?, ?,?);";
+    const char* sql = "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES (?, ?, ?, ?, ?, ?, ?);";
     sqlite3_stmt* stmt;
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {

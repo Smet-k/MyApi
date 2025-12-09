@@ -85,6 +85,8 @@ int load_database() {
             fprintf(stderr, "Failed to create Employees: %s\n", errMsg);
 
         const char* sql_insert_employees =
+            "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES ('admin', 'admin', 'admin','2025-11-04', 1, 2, 'admin');"
+            "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES ('sysadmin', 'sysadmin', 'sysadmin','2025-11-04', 1, 3, 'admin');"
             "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES ('johndoe', 'John', 'Doe','2025-11-04', 1, 1, '1111');"
             "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES ('janedoe', 'Jane', 'Doe','2025-10-10', 2, 1, '1234');"
             "INSERT INTO Employees (login, name, surname, employment_date, position_id, role_id, password) VALUES ('edmund', 'Edmund', 'McMillen','2025-05-02', 4, 1, '1243');";

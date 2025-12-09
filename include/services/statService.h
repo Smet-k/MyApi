@@ -16,4 +16,5 @@ int service_select_stat_by_id(sqlite3* db, int id, Stat* out);
 int service_add_stat(sqlite3* db, const Stat* s);
 int service_update_stat(sqlite3* db, const Stat* s);
 int service_delete_stat_by_id(sqlite3* db, int id);
+int service_select_stats_by_employee(sqlite3* db, paginated_request_t* request, Stat* out, int employee_id);
 #endif

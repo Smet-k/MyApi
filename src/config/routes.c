@@ -29,6 +29,7 @@ void setup_routes(Config *cfg){
     config_router_append(cfg, "api/newsletter", HTTP_PUT, update_news);
 
     config_router_append(cfg, "api/stats", HTTP_GET, select_stats);
+    config_router_append(cfg, "api/stats/:id", HTTP_GET, select_stats_for_employee);
     config_router_append(cfg, "api/stat/:id", HTTP_GET, select_stat);
     config_router_append(cfg, "api/stat/:id", HTTP_DELETE, delete_stat);
     config_router_append(cfg, "api/stat", HTTP_POST, add_stat);

@@ -55,7 +55,7 @@ api_response_t* select_positions(void* args) {
     int page_size = PAGE_SIZE;
 
     parse_paginated_query(request_params->query, &page, &page_size);
-    paginated_request_t request = {.page=page, page_size=page_size};
+    paginated_request_t request = {.page=page, .page_size=page_size};
 
     Position* positions = calloc(page_size, sizeof(Position) * page_size);
 
