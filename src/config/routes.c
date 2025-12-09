@@ -6,6 +6,7 @@
 #include "controllers/positionController.h"
 #include "controllers/newsController.h"
 #include "controllers/statController.h"
+#include "controllers/manageController.h"
 void setup_routes(Config *cfg){
     cfg->router = init_router();
 
@@ -15,7 +16,8 @@ void setup_routes(Config *cfg){
     config_router_append(cfg, "api/employee", HTTP_POST, add_employee);
     config_router_append(cfg, "api/employee", HTTP_PUT, update_employee);
     config_router_append(cfg, "api/employee/auth", HTTP_POST, auth_employee);
-
+    config_router_append(cfg, "api/employees_view", HTTP_GET, select_employees_view);
+    
     config_router_append(cfg, "api/positions", HTTP_GET, select_positions);
     config_router_append(cfg, "api/position/:id", HTTP_GET, select_position);
     config_router_append(cfg, "api/position/:id", HTTP_DELETE, delete_position);

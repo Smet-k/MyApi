@@ -12,6 +12,7 @@
 #define PAGE_SIZE 10
 #define NEWS_SIZE 1024
 
+static void json_remove_spaces(char *s);
 static Newsletter* parse_news_json(char* json);
 
 api_response_t* select_newsletter(void* args){
@@ -108,7 +109,7 @@ api_response_t* add_news(void* args){
         fprintf(stderr, "Failed to open database\n");
         return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
-
+    json_remove_spaces(request_params->body);
     Newsletter* news = parse_news_json(request_params->body);
 
     if (service_add_news(db, news) < 0){
@@ -147,11 +148,13 @@ api_response_t* update_news(void* args){
     api_request_t* request_params = (api_request_t*)args;
     sqlite3* db = NULL;
 
+    
     if (open_database(&db) < 0){
         fprintf(stderr, "Failed to open database\n");
         return &(api_response_t){.reason="Internal Server Error", .code=500};
     }
 
+    json_remove_spaces(request_params->body);
     Newsletter* news = parse_news_json(request_params->body);
 
     if (news->id <= 0) {
@@ -170,27 +173,96 @@ api_response_t* update_news(void* args){
 
 static Newsletter* parse_news_json(char* json) {
     Newsletter* n = calloc(1, sizeof(Newsletter));
-    char *str1, *token, *subtoken;
-    char *saveptr1, *saveptr2;
 
-    // Clearing braces
-    json += 1;
-    json[strlen(json) - 1] = '\0';
+    char *p = json;
 
-   for (str1 = json; ; str1 = NULL) {
-        token = strtok_r(str1, ",", &saveptr1);
-        if (token == NULL)
-            break;
+    // Skip whitespace and leading brace
+    while (*p && (*p == ' ' || *p == '\n' || *p == '\t')) p++;
+    if (*p == '{') p++;
 
-        subtoken = json_trim(strtok_r(token, ":", &saveptr2));
-        char* value =  json_trim(strtok_r(NULL, ":", &saveptr2));
-        
-        if (strcmp("id", subtoken) == 0) n->id = atoi(value);
-        else if(strcmp("title", subtoken) == 0) strcpy(n->title, value);
-        else if(strcmp("body", subtoken) == 0) strcpy(n->body, value);
-        else if(strcmp("date", subtoken) == 0) strcpy(n->date, value);
+    while (*p) {
+
+        while (*p && (*p == ' ' || *p == '\n' || *p == '\t' || *p == ',')) p++;
+        if (*p == '}') break;
+
+        if (*p != '"') break; 
+        p++;
+
+        char key[64] = {0};
+        int ki = 0;
+
+        while (*p && *p != '"') {
+            if (ki < 63)
+                key[ki++] = *p;
+            p++;
+        }
+        if (*p != '"') break;
+        p++; // skip closing quote
+
+        // skip colon
+        while (*p && *p != ':') p++;
+        if (*p == ':') p++;
+
+        // skip whitespace
+        while (*p && (*p==' '||*p=='\n'||*p=='\t')) p++;
+
+
+        char value[512] = {0};
+        int vi = 0;
+
+        if (*p == '"') {
+            p++; 
+            while (*p) {
+                if (*p == '"')
+                    break;
+
+
+                if (*p == '\\' && *(p+1) == '"') {
+                    if (vi < sizeof(value)-1)
+                        value[vi++] = '"';
+                    p += 2;
+                    continue;
+                }
+
+                if (vi < sizeof(value)-1)
+                    value[vi++] = *p;
+
+                p++;
+            }
+            if (*p == '"') p++; 
+        } 
+        else {
+            while (*p && *p != ',' && *p != '}') {
+                if (vi < sizeof(value)-1)
+                    value[vi++] = *p;
+                p++;
+            }
+        }
+
+        if (strcmp(key, "id") == 0)
+            n->id = atoi(value);
+
+        else if (strcmp(key, "title") == 0)
+            strncpy(n->title, value, sizeof(n->title)-1);
+
+        else if (strcmp(key, "body") == 0)
+            strncpy(n->body, value, sizeof(n->body)-1);
+
+        else if (strcmp(key, "date") == 0)
+            strncpy(n->date, value, sizeof(n->date)-1);
     }
 
     return n;
 }
 
+
+static void json_remove_spaces(char *s) {
+    int in_quotes = 0, j = 0;
+    for (int i = 0; s[i]; i++) {
+        if (s[i] == '"') in_quotes = !in_quotes;
+        if (!in_quotes && (s[i] == ' ' || s[i] == '\n' || s[i] == '\t'))
+            continue;
+        s[j++] = s[i];
+    }
+    s[j] = '\0';
+}

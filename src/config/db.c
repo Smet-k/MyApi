@@ -115,6 +115,20 @@ int load_database() {
             "INSERT INTO News (title, body, date) VALUES "
             "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
             "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
+            "('Holiday Announcement', 'The office will be closed on December 25th and 26th.', '2025-10-20'),"
+            "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+            "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
+            "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+            "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
+            "('Holiday Announcement', 'The office will be closed on December 25th and 26th.', '2025-10-20'),"
+            "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+                        "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+            "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
+            "('Holiday Announcement', 'The office will be closed on December 25th and 26th.', '2025-10-20'),"
+            "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+            "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
+            "('System Maintenance', 'The system will be down for maintenance tonight at 11 PM.', '2025-11-04'),"
+            "('New Employee Portal', 'A new employee management portal has been launched.', '2025-10-28'),"
             "('Holiday Announcement', 'The office will be closed on December 25th and 26th.', '2025-10-20');";
 
         rc = sqlite3_exec(db, sql_insert_news, 0, 0, &errMsg);
